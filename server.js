@@ -4,6 +4,7 @@ const db = require('./db');
 const personRoutes = require('./routes/personRoutes');
 const menuRoutes = require('./routes/menuRoutes');
 require('dotenv').config();
+const passport = require('./Auth');
 
 const port = process.env.PORT || 3000;
 app.use(express.json());
@@ -20,50 +21,17 @@ const logRequest = (req,res,next)=>{
 
 app.use(logRequest);
 
-app.get('/', (req, res) => {
-  res.send('Node.js server!');
+app.use(passport.initialize());
+
+const localAuthMiddleware = passport.authenticate('local',{session:false});
+
+app.get('/',localAuthMiddleware, (req, res) => {
+  res.send('Welcome to the Node.js server!');
 });
 
 //person 
-app.use('/person', personRoutes);
+app.use('/person',localAuthMiddleware,  personRoutes);
 
 //menu
 app.use('/menu', menuRoutes);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// app.post('/person', (req,res)=>{
-//     const data = req.body;
-//     const newPerson = new Person(data);
-//     newPerson.save((err,savedPerson)=>{
-//         if(err){
-//             console.log('Error saving person:', err);
-//             res.status(500).send('Error saving person');
-//         }else{
-//             console.log('Person saved:', savedPerson);
-//             res.status(201).json(savedPerson);
-//         }
-//     })
-// })
-
 
