@@ -46,4 +46,52 @@ router.get('/:workType', async (req, res) => {
     }
 });
 
+//update
+router.put('/:id', async (req,res)=>{
+    try {
+        //extract the id from the url parameter
+        const personId = req.params.id;
+        //extract the updated data from the request body
+        const updatedPersonData = req.body;
+
+        const response = await Person.findByIdAndUpdate(personId, updatedPersonData, {
+            new: true, //return the updated document
+            runValidators: true, // run mongoose validation
+        });
+
+        if(!response){
+            return res.status(404).json({ err: 'Person not found' });
+        }
+
+        console.log('Person updated:', response);
+        res.status(200).json(response);
+    } catch (error) {
+        console.error("Error updating person:", error);
+        res.status(500).json({ err: 'Error updating person' });
+    }
+});
+
+router.delete('/:id', async (req, res) => {
+    try {
+        //extract the id from the url parameter
+        const personId = req.params.id;
+
+        //assuming you have a person model
+        const response = await Person.findByIdAndDelete(personId);
+
+        if (!response) {
+            return res.status(404).json({ err: 'Person not found' });
+        }
+
+        console.log('Person deleted:');
+        res.status(200).json({ message: 'Person deleted successfully' });
+
+    } catch (error) {
+        console.error("Error deleting person:", error);
+        res.status(500).json({ err: 'Error deleting person' });
+    }
+});
+
+
+
 module.exports = router;

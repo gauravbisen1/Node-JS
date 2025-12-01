@@ -28,5 +28,21 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.get('/:taste', async (req,res)=>{
+    try {
+        const taste = req.params.taste;
+        if (taste == 'sweet' || taste == 'sour' || taste == 'salty' || taste == 'bitter') {
+            const response = await MenuItem.find({ taste: taste });
+            console.log('Menu items fetched by taste type');
+            res.status(200).json(response);
+        } else {
+            res.status(400).json({ err: 'Invalid taste type' });
+        }
+    } catch (error) {
+        console.error("Error fetching menu items by taste type:", error);
+        res.status(500).json({ err: 'Error fetching menu items by taste type' });
+    }
+})
+
 module.exports = router;
 
