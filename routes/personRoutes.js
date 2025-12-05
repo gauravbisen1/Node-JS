@@ -1,24 +1,81 @@
 const express = require('express');
 const router = express.Router();
 const Person = require('../models/Person');
+const { jwtAuthMiddleware, generateToken } = require('./../jwt');
+
 
 //person
-router.post('/', async (req, res) => {
+router.post('/signup', async (req, res) => {
     try {
         const data = req.body;
         const newPerson = new Person(data);
 
-        const savedPerson = await newPerson.save();
+        const response = await newPerson.save();
 
-        console.log("Person saved:", savedPerson);
-        res.status(201).json(savedPerson);
+        const payload = {
+            id: response.id,
+            username: response.username
+        }
+
+        const token = generateToken(payload);
+        console.log("Token is", token);
+
+        console.log("Person saved:", response);
+        res.status(201).json({ response: response, token: token });
     } catch (err) {
         console.error("Error saving person:", err);
         res.status(500).json({ err: 'Error saving person' });
     }
 });
 
-router.get('/', async (req, res) => {
+//login
+router.post('/login', async (req, res) => {
+    try {
+        //extract username and password from request body
+        const { username, password } = req.body;
+
+        //find the user in the database
+        const user = await Person.findOne({ username: username });
+
+        //if user doesn't exist or password doesn't match, return error
+        if (!user || !(await user.comparePassword(password))) {
+            return res.status(401).json({ err: 'Invalid username or password' });
+        }
+
+        //generate jwt token
+        const payload = {
+            id: user.id,
+            username: user.username
+        }
+        const token = generateToken(payload);
+
+        //return token as response
+        res.json({ token: token });
+
+    } catch (error) {
+        console.error("Error during login:", error);
+        res.status(500).json({ err: 'internal server error' });
+    }
+});
+
+//profile route
+router.get('/profile', jwtAuthMiddleware, async (req, res) => {
+    try {
+        const userData = req.user;
+        console.log("User data:", userData);
+
+        const userId = userData.id;
+        const user = await Person.findById(userId);
+
+        res.status(200).json({user});
+    } catch (error) {
+        console.error("Error fetching profile:", error);
+        res.status(500).json({ err: 'Error fetching profile' });
+    }
+
+});
+
+router.get('/', jwtAuthMiddleware, async (req, res) => {
     try {
         const data = await Person.find();
 
@@ -47,7 +104,7 @@ router.get('/:workType', async (req, res) => {
 });
 
 //update
-router.put('/:id', async (req,res)=>{
+router.put('/:id', async (req, res) => {
     try {
         //extract the id from the url parameter
         const personId = req.params.id;
@@ -59,7 +116,7 @@ router.put('/:id', async (req,res)=>{
             runValidators: true, // run mongoose validation
         });
 
-        if(!response){
+        if (!response) {
             return res.status(404).json({ err: 'Person not found' });
         }
 

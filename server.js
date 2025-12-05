@@ -25,12 +25,12 @@ app.use(passport.initialize());
 
 const localAuthMiddleware = passport.authenticate('local',{session:false});
 
-app.get('/',localAuthMiddleware, (req, res) => {
+app.get('/', (req, res) => {
   res.send('Welcome to the Node.js server!');
 });
 
 //person 
-app.use('/person',localAuthMiddleware,  personRoutes);
+app.use('/person',  personRoutes);
 
 //menu
 app.use('/menu', menuRoutes);
